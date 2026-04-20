@@ -59,13 +59,13 @@ async def downloadImg(session, imgName,imgUrl,fileName,log):
 
 
 async def getImg(url, session,fileName,log):  # 具体页面每个图片
-    url = url
     async with session.get(url) as resp:
         html = etree.HTML(await resp.text())
-        figures = html.xpath("/html/body/div/div/main/div/div/div/article/div/figure/figure")       #建议用//figure/figure,绝对路径太愚蠢了
+#figures = html.xpath("/html/body/div/div/main/div/div/div/article/div/figure/figure")       #建议用//figure/figure,绝对路径太愚蠢了
+        figures = html.xpath("//figure/figure")
         tasks = []
         for fig in figures:
-            imgUrl = fig.xpath("./img/@data-lazy-src")[0]
+            imgUrl = fig.xpath("./img/@src")[0]
             imgName = imgUrl.split("/")[-1]
             tasks.append(asyncio.create_task(downloadImg(session, imgName,imgUrl,fileName,log)))
         await asyncio.gather(*tasks)
@@ -73,7 +73,6 @@ async def getImg(url, session,fileName,log):  # 具体页面每个图片
 
 async def getUrl(text, session,log):
     pageNumber = []
-    maxPageNum=1
     url = "https://everia.club/"
     resp = requests.get(url + "?s=" + text)
     processOne = BeautifulSoup(resp.text, "html.parser")
@@ -84,9 +83,9 @@ async def getUrl(text, session,log):
         for page in pageNumbers:
             num = page.text.replace(',', '')
             pageNumber.append(num)
-            num=processOne.select("span[class='page-numbers current']")              # 获取当前页 因为用span包裹，所以要额外获得
-            pageNumbersCurrent=num[0].text.replace(',', '')
-            pageNumber.append(pageNumbersCurrent)
+        numA=processOne.select("span[class='page-numbers current']")              # 获取当前页 因为用span包裹，所以要额外获得
+        pageNumbersCurrent=numA[0].text.replace(',', '')
+        pageNumber.append(pageNumbersCurrent)
         maxPageNum = int(max(pageNumber,key=int))
     # 取出最大值
     tasks = []
